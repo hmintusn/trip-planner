@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: trip-planner
+  main:
+    allow-bean-definition-overriding: true
+  output:
+    ansi:
+      enabled: always
+
+  data:
+    redis:
+      host: 127.0.0.1   # 👈 use the container name, not localhost (for Docker)
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  datasource:
+    url: jdbc:postgresql://trip-planner-postgres:5432/trip_planner  # 👈 match docker-compose
+    username: tripplanner
+    password: tripplanner
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update          # 👈 good for local dev; use 'validate' or migrations in prod
+    show-sql: true              # 👈 logs SQL queries for debugging
+    properties:
+      hibernate:
+        "[format_sql]": true
+
+firebase:
+  jwks-url: https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
+  cache-ttl-seconds: 3600
+  project-id: trip-26ed1
+
+logging:
+  level:
+    "[org.springframework.data.redis]": DEBUG
+    "[org.springframework.web]": INFO
+    "[org.hibernate.SQL]": DEBUG
