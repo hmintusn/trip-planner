@@ -34,18 +34,6 @@ public final class JsonUtils {
     }
     
     /**
-     * Convert JSON string to object
-     */
-    public static <T> T fromJson(String json, Class<T> clazz) {
-        try {
-            return GSON.fromJson(json, clazz);
-        } catch (JsonSyntaxException e) {
-            log.error("Failed to parse JSON to {}: {}", clazz.getSimpleName(), json, e);
-            throw new RuntimeException("JSON parsing failed", e);
-        }
-    }
-    
-    /**
      * Convert JSON string to object with Type
      */
     public static <T> T fromJson(String json, Type typeOfT) {
