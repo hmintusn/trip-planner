@@ -1,11 +1,15 @@
 package com.example.trip_planner.common.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import java.io.InputStream;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Type;
 
 /**
  * Utility class for JSON operations
@@ -13,12 +17,12 @@ import java.lang.reflect.Type;
 @Slf4j
 public final class JsonUtils {
     
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     
-    private JsonUtils() {
-        // Utility class - prevent instantiation
+    static {
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+
+        OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
     
     /**
@@ -26,21 +30,33 @@ public final class JsonUtils {
      */
     public static String toJson(Object object) {
         try {
-            return GSON.toJson(object);
-        } catch (Exception e) {
-            log.error("Failed to convert object to JSON", e);
-            throw new RuntimeException("JSON conversion failed", e);
+            return OBJECT_MAPPER.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to write JSON: {}", object, e);
+            throw new RuntimeException("JSON writing failed", e);
         }
     }
     
     /**
-     * Convert JSON string to object with Type
+     * Deserialize JSON content from given JSON content String.
      */
-    public static <T> T fromJson(String json, Type typeOfT) {
+    public static <T> T fromJson(String json, TypeReference<T> typeRef) {
         try {
-            return GSON.fromJson(json, typeOfT);
-        } catch (JsonSyntaxException e) {
-            log.error("Failed to parse JSON with type: {}", json, e);
+            return OBJECT_MAPPER.readValue(json, typeRef);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse JSON: {}", json, e);
+            throw new RuntimeException("JSON parsing failed", e);
+        }
+    }
+
+    /**
+     * Deserialize JSON content from given InputStream.
+     */
+    public static <T> T fromJson(InputStream inputStream, TypeReference<T> typeRef) {
+        try {
+            return OBJECT_MAPPER.readValue(inputStream, typeRef);
+        } catch (Exception e) {
+            log.error("Failed to parse JSON: {}", inputStream, e);
             throw new RuntimeException("JSON parsing failed", e);
         }
     }

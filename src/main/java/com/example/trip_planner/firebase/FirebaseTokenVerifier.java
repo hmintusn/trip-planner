@@ -1,4 +1,4 @@
-package com.example.trip_planner.firebase.service;
+package com.example.trip_planner.firebase;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;

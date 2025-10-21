@@ -1,8 +1,10 @@
-package com.example.trip_planner.firebase.service;
+package com.example.trip_planner.firebase;
 
 import com.example.trip_planner.common.constants.RedisKeys;
 import com.example.trip_planner.common.util.JsonUtils;
 import com.example.trip_planner.common.util.RedisUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -48,7 +49,7 @@ public class FirebaseJwksService {
             String cachedJwks = RedisUtils.get(redisTemplate, RedisKeys.FIREBASE_JWKS);
             if (cachedJwks != null) {
                 // parse as Map<String, Object> because JWKS contains nested structures (arrays/objects)
-                Map<String, Object> parsed = JsonUtils.fromJson(cachedJwks, (Type) Map.class);
+                Map<String, Object> parsed = JsonUtils.fromJson(cachedJwks, new TypeReference<Map<String, Object>>() {});
                 return parsed;
             }
             // Fetch from Firebase
