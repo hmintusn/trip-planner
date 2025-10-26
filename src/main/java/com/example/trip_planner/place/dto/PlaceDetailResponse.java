@@ -28,7 +28,7 @@ public class PlaceDetailResponse {
     private Integer provinceId;
     private String provinceName;
     private String category;
-    private Integer priceLevel;
+    private String priceLevel;
     private String thumbnail;
     private String summary;
     private Double score;

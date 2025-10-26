@@ -53,7 +53,7 @@ public class Place {
     @Indexed
     private String category; // attraction, hotel, restaurant, entertainment
     
-    private Integer priceLevel;
+    private String priceLevel;
     private String thumbnail;
     private String summary;
     
