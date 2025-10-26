@@ -1,6 +1,7 @@
 package com.example.trip_planner.place.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ImportResponse {
     private int totalPlaces;
     private int insertedPlaces;

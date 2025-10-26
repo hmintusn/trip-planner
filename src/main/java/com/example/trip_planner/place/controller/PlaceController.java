@@ -1,7 +1,9 @@
 package com.example.trip_planner.place.controller;
 
 import com.example.trip_planner.place.dto.PlaceDetailResponse;
+import com.example.trip_planner.place.dto.PlaceDetailsResponse;
 import com.example.trip_planner.place.dto.PlaceFeedResponse;
+import com.example.trip_planner.place.service.PlaceDetailsService;
 import com.example.trip_planner.place.service.PlaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class PlaceController {
     
     private final PlaceService placeService;
+    private final PlaceDetailsService placeDetailsService;
     
     /**
      * Get a list of places with filtering and pagination
@@ -56,6 +59,21 @@ public class PlaceController {
         log.info("GET /api/v1/places/{}", id);
         
         PlaceDetailResponse result = placeService.getPlaceById(id);
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    /**
+     * Get extended details of a place, including content blocks, articles, or heritage info
+     * 
+     * @param id Place ID (Google Place ID)
+     * @return Extended place details
+     */
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<PlaceDetailsResponse> getPlaceDetails(@PathVariable String id) {
+        log.info("GET /api/v1/places/{}/detail", id);
+        
+        PlaceDetailsResponse result = placeDetailsService.getPlaceDetailsById(id);
         
         return ResponseEntity.ok(result);
     }

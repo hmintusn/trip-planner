@@ -22,6 +22,7 @@ public class PlaceFeedResponse {
     private Double rating;
     private Integer userRatingCount;
     private String thumbnail;
+    private String summary;
     private String category;
     private Integer provinceId;
     private String provinceName;

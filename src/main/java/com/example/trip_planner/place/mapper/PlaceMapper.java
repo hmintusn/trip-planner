@@ -24,6 +24,7 @@ public class PlaceMapper {
                 .userRatingCount(place.getUserRatingCount())
                 .thumbnail(place.getThumbnail())
                 .category(place.getCategory())
+                .summary(place.getSummary())
                 .provinceId(place.getProvinceId())
                 .provinceName(place.getProvinceName())
                 .score(place.getScore())
