@@ -1,5 +1,8 @@
 package com.example.trip_planner.place.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,11 +10,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.Instant;
 import java.util.List;
@@ -39,8 +42,10 @@ public class Place {
     private String formattedAddress;
     private List<String> types;
     
-    @GeoSpatialIndexed
-    private Location location; // GeoJSON Point for geospatial queries
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    @JsonSerialize(using = GeoJsonPointSerializer.class)
+    @JsonDeserialize(using = GeoJsonPointDeserializer.class)
+    private GeoJsonPoint location; // GeoJSON Point for geospatial queries
     
     private Double rating;
     private Integer userRatingCount;

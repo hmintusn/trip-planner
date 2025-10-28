@@ -3,6 +3,7 @@ package com.example.trip_planner.place.repository;
 import com.example.trip_planner.place.model.Place;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.geo.Distance;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -41,4 +42,16 @@ public interface PlaceRepository extends MongoRepository<Place, String> {
      * Find all places by category
      */
     List<Place> findByCategoryOrderByScoreDesc(String category);
+    
+    /**
+     * Find places near a point within a distance, filtered by categories
+     */
+    @Query("{'location': {$nearSphere: {$geometry: {type: 'Point', coordinates: [?0, ?1]}, $maxDistance: ?2}}, 'category': {$in: ?3}}")
+    List<Place> findByLocationNearWithCategories(double lng, double lat, double maxDistance, List<String> categories);
+    
+    /**
+     * Find places near a point within a distance (all categories)
+     */
+    @Query("{'location': {$nearSphere: {$geometry: {type: 'Point', coordinates: [?0, ?1]}, $maxDistance: ?2}}}")
+    List<Place> findByLocationNearAllCategories(double lng, double lat, double maxDistance);
 }

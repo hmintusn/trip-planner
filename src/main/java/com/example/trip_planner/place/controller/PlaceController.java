@@ -3,6 +3,8 @@ package com.example.trip_planner.place.controller;
 import com.example.trip_planner.place.dto.PlaceDetailResponse;
 import com.example.trip_planner.place.dto.PlaceDetailsResponse;
 import com.example.trip_planner.place.dto.PlaceFeedResponse;
+import com.example.trip_planner.place.dto.PlaceRecommendationRequest;
+import com.example.trip_planner.place.dto.PlaceRecommendationResponse;
 import com.example.trip_planner.place.service.PlaceDetailsService;
 import com.example.trip_planner.place.service.PlaceService;
 import lombok.RequiredArgsConstructor;
@@ -49,21 +51,6 @@ public class PlaceController {
     }
     
     /**
-     * Get detailed information about a specific place
-     * 
-     * @param id Place ID (Google Place ID)
-     * @return Detailed place information
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<PlaceDetailResponse> getPlaceById(@PathVariable String id) {
-        log.info("GET /api/v1/places/{}", id);
-        
-        PlaceDetailResponse result = placeService.getPlaceById(id);
-        
-        return ResponseEntity.ok(result);
-    }
-    
-    /**
      * Get extended details of a place, including content blocks, articles, or heritage info
      * 
      * @param id Place ID (Google Place ID)
@@ -74,6 +61,39 @@ public class PlaceController {
         log.info("GET /api/v1/places/{}/detail", id);
         
         PlaceDetailsResponse result = placeDetailsService.getPlaceDetailsById(id);
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    /**
+     * Get place recommendations based on selected heritage places
+     * 
+     * @param request Recommendation request with placeIds, categories, and radius
+     * @return List of recommended places with distance information
+     */
+    @PostMapping("/recommendations")
+    public ResponseEntity<PlaceRecommendationResponse> getPlaceRecommendations(
+            @RequestBody PlaceRecommendationRequest request) {
+        
+        log.info("POST /api/v1/places/recommendations - placeIds: {}, categories: {}, radius: {}", 
+                request.getPlaceIds(), request.getCategories(), request.getRadius());
+        
+        PlaceRecommendationResponse result = placeService.getPlaceRecommendations(request);
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    /**
+     * Get detailed information about a specific place
+     * 
+     * @param id Place ID (Google Place ID)
+     * @return Detailed place information
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<PlaceDetailResponse> getPlaceById(@PathVariable String id) {
+        log.info("GET /api/v1/places/{}", id);
+        
+        PlaceDetailResponse result = placeService.getPlaceById(id);
         
         return ResponseEntity.ok(result);
     }

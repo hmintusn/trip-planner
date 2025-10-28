@@ -1,9 +1,9 @@
 package com.example.trip_planner.place.mapper;
 
 import com.example.trip_planner.place.dto.*;
-import com.example.trip_planner.place.model.Location;
 import com.example.trip_planner.place.model.Place;
 import com.example.trip_planner.place.model.RegularOpeningHours;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 /**
  * Mapper utility for converting between entities and DTOs
@@ -61,17 +61,17 @@ public class PlaceMapper {
     }
     
     /**
-     * Convert Location to LocationDTO
+     * Convert GeoJsonPoint to LocationDTO
      */
-    private static LocationDTO toLocationDTO(Location location) {
+    public static LocationDTO toLocationDTO(GeoJsonPoint location) {
         if (location == null) return null;
-        return new LocationDTO(location.getLat(), location.getLng());
+        return new LocationDTO(location.getY(), location.getX()); // GeoJsonPoint: X=longitude, Y=latitude
     }
     
     /**
      * Convert RegularOpeningHours to DTO
      */
-    private static RegularOpeningHoursDTO toRegularOpeningHoursDTO(RegularOpeningHours hours) {
+    public static RegularOpeningHoursDTO toRegularOpeningHoursDTO(RegularOpeningHours hours) {
         if (hours == null) return null;
         return new RegularOpeningHoursDTO(hours.getWeekdayDescriptions());
     }

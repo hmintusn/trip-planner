@@ -2,6 +2,9 @@ package com.example.trip_planner.place.service.impl;
 
 import com.example.trip_planner.place.dto.PlaceDetailResponse;
 import com.example.trip_planner.place.dto.PlaceFeedResponse;
+import com.example.trip_planner.place.dto.PlaceRecommendationItem;
+import com.example.trip_planner.place.dto.PlaceRecommendationRequest;
+import com.example.trip_planner.place.dto.PlaceRecommendationResponse;
 import com.example.trip_planner.place.mapper.PlaceMapper;
 import com.example.trip_planner.place.model.Place;
 import com.example.trip_planner.place.repository.PlaceRepository;
@@ -15,7 +18,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of PlaceService
@@ -114,6 +120,12 @@ public class PlaceServiceImpl implements PlaceService {
         Instant now = Instant.now();
         
         for (Place place : places) {
+            // Debug: Log the location object type
+            if (place.getLocation() != null) {
+                log.debug("Place {} location type: {}", place.getName(), place.getLocation().getClass().getName());
+                log.debug("Location value: X={}, Y={}", place.getLocation().getX(), place.getLocation().getY());
+            }
+            
             // Check if place exists
             boolean exists = placeRepository.existsById(place.getId());
             
@@ -138,5 +150,119 @@ public class PlaceServiceImpl implements PlaceService {
         result.put("updated", updated);
         
         return result;
+    }
+    
+    @Override
+    public PlaceRecommendationResponse getPlaceRecommendations(PlaceRecommendationRequest request) {
+        log.debug("Getting place recommendations for placeIds: {}, categories: {}, radius: {}", 
+                request.getPlaceIds(), request.getCategories(), request.getRadius());
+        
+        // Validate request
+        if (request.getPlaceIds() == null || request.getPlaceIds().isEmpty()) {
+            throw new IllegalArgumentException("placeIds cannot be null or empty");
+        }
+        
+        // Get all places by IDs to calculate center point
+        List<Place> selectedPlaces = placeRepository.findAllById(request.getPlaceIds());
+        if (selectedPlaces.isEmpty()) {
+            return PlaceRecommendationResponse.builder()
+                    .recommendations(Collections.emptyList())
+                    .build();
+        }
+        
+        // Calculate average center point
+        double totalLat = 0.0;
+        double totalLng = 0.0;
+        for (Place place : selectedPlaces) {
+            if (place.getLocation() != null) {
+                totalLat += place.getLocation().getY(); // GeoJsonPoint: Y = latitude
+                totalLng += place.getLocation().getX(); // GeoJsonPoint: X = longitude
+            }
+        }
+        double centerLat = totalLat / selectedPlaces.size();
+        double centerLng = totalLng / selectedPlaces.size();
+        
+        // Default radius is 2000 meters
+        double radiusMeters = request.getRadius() != null ? request.getRadius() : 2000.0;
+        
+        // Query places within radius
+        List<Place> nearbyPlaces;
+        if (request.getCategories() != null && !request.getCategories().isEmpty()) {
+            nearbyPlaces = placeRepository.findByLocationNearWithCategories(
+                    centerLng, centerLat, radiusMeters, request.getCategories());
+        } else {
+            nearbyPlaces = placeRepository.findByLocationNearAllCategories(
+                    centerLng, centerLat, radiusMeters);
+        }
+        
+        // Remove the original selected places from recommendations
+        nearbyPlaces = nearbyPlaces.stream()
+                .filter(place -> !request.getPlaceIds().contains(place.getId()))
+                .collect(Collectors.toList());
+        
+        // Calculate distances and create recommendation items
+        List<PlaceRecommendationItem> recommendations = new ArrayList<>();
+        for (Place place : nearbyPlaces) {
+            // Calculate distance in meters
+            double distance = calculateDistance(centerLat, centerLng, 
+                    place.getLocation().getY(), place.getLocation().getX()); // GeoJsonPoint: Y=lat, X=lng
+            
+            PlaceRecommendationItem item = PlaceRecommendationItem.builder()
+                    ._id(place.getId())
+                    .name(place.getName())
+                    .formattedAddress(place.getFormattedAddress())
+                    .types(place.getTypes())
+                    .location(PlaceMapper.toLocationDTO(place.getLocation()))
+                    .rating(place.getRating())
+                    .userRatingCount(place.getUserRatingCount())
+                    .regularOpeningHours(PlaceMapper.toRegularOpeningHoursDTO(place.getRegularOpeningHours()))
+                    .provinceId(place.getProvinceId())
+                    .provinceName(place.getProvinceName())
+                    .category(place.getCategory())
+                    .priceLevel(place.getPriceLevel())
+                    .thumbnail(place.getThumbnail())
+                    .summary(place.getSummary())
+                    .score(place.getScore())
+                    .createdAt(place.getCreatedAt() != null ? 
+                            ZonedDateTime.ofInstant(place.getCreatedAt(), ZoneId.systemDefault()) : null)
+                    .updatedAt(place.getUpdatedAt() != null ? 
+                            ZonedDateTime.ofInstant(place.getUpdatedAt(), ZoneId.systemDefault()) : null)
+                    .distanceMeters((int) Math.round(distance))
+                    .build();
+            
+            recommendations.add(item);
+        }
+        
+        // Sort by distance (ascending), then by score (descending)
+        recommendations.sort((a, b) -> {
+            int distanceCompare = Integer.compare(a.getDistanceMeters(), b.getDistanceMeters());
+            if (distanceCompare != 0) {
+                return distanceCompare;
+            }
+            return Double.compare(b.getScore() != null ? b.getScore() : 0.0, 
+                                a.getScore() != null ? a.getScore() : 0.0);
+        });
+        
+        return PlaceRecommendationResponse.builder()
+                .recommendations(recommendations)
+                .build();
+    }
+    
+    /**
+     * Calculate distance between two points using Haversine formula
+     */
+    private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+        final int EARTH_RADIUS = 6371000; // meters
+        
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lngDistance = Math.toRadians(lng2 - lng1);
+        
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        return EARTH_RADIUS * c;
     }
 }

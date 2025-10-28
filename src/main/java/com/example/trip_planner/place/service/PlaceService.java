@@ -2,6 +2,8 @@ package com.example.trip_planner.place.service;
 
 import com.example.trip_planner.place.dto.PlaceDetailResponse;
 import com.example.trip_planner.place.dto.PlaceFeedResponse;
+import com.example.trip_planner.place.dto.PlaceRecommendationRequest;
+import com.example.trip_planner.place.dto.PlaceRecommendationResponse;
 import com.example.trip_planner.place.model.Place;
 import org.springframework.data.domain.Page;
 
@@ -56,4 +58,11 @@ public interface PlaceService {
      * @return map with counts: total, inserted, updated
      */
     Map<String, Integer> importPlaces(List<Place> places);
+    
+    /**
+     * Get place recommendations based on selected heritage places
+     * @param request Recommendation request with placeIds, categories, and radius
+     * @return List of recommended places with distance information
+     */
+    PlaceRecommendationResponse getPlaceRecommendations(PlaceRecommendationRequest request);
 }
