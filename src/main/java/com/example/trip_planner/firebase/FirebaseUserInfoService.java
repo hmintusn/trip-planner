@@ -23,7 +23,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class FirebaseUserInfoService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     @Value("${firebase.api-key:}")
