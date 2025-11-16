@@ -9,12 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Admin user management controller
  * Endpoints: /api/v1/admin/users/*
- * 
+ *
  * TODO: Add admin role check via Firebase custom claims
  */
 @Slf4j
@@ -31,8 +32,11 @@ public class UserAdminController {
      */
     @GetMapping
     public ResponseEntity<Page<UserProfileDTO>> listUsers(Pageable pageable) {
-        log.info("GET /api/v1/admin/users - page: {}, size: {}", 
+        String adminUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        log.info("GET /api/v1/admin/users - page: {}, size: {}",
                 pageable.getPageNumber(), pageable.getPageSize());
+
+        log.info("Admin access by uid: {}", adminUserId);
         Page<UserProfileDTO> users = userService.listUsers(pageable);
         return ResponseEntity.ok(users);
     }
@@ -43,7 +47,10 @@ public class UserAdminController {
      */
     @GetMapping("/{uid}")
     public ResponseEntity<UserProfileDTO> getUser(@PathVariable String uid) {
+        String adminUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info("GET /api/v1/admin/users/{}", uid);
+
+        log.info("Admin access by uid: {} for user: {}", adminUserId, uid);
         UserProfileDTO profile = userService.getUserProfile(uid);
         return ResponseEntity.ok(profile);
     }
@@ -56,7 +63,10 @@ public class UserAdminController {
     public ResponseEntity<UserProfileDTO> updateUser(
             @PathVariable String uid,
             @RequestBody AdminUpdateUserRequest request) {
+        String adminUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info("PUT /api/v1/admin/users/{} - request: {}", uid, request);
+
+        log.info("Admin update by uid: {} for user: {}", adminUserId, uid);
         userService.adminUpdateUser(uid, request);
         UserProfileDTO profile = userService.getUserProfile(uid);
         return ResponseEntity.ok(profile);
@@ -70,7 +80,10 @@ public class UserAdminController {
     public ResponseEntity<UserProfileDTO> updateStatus(
             @PathVariable String uid,
             @RequestBody UpdateStatusRequest request) {
+        String adminUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info("PATCH /api/v1/admin/users/{}/status - status: {}", uid, request.getStatus());
+
+        log.info("Admin status update by uid: {} for user: {}", adminUserId, uid);
         userService.updateUserStatus(uid, request.getStatus());
         UserProfileDTO profile = userService.getUserProfile(uid);
         return ResponseEntity.ok(profile);

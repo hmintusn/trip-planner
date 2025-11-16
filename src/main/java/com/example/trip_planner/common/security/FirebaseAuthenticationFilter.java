@@ -57,15 +57,10 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                 );
                 
                 // Set user details in authentication
-                authentication.setAuthenticated(true);
+                // authentication.setAuthenticated(true);
                 
                 // Set in security context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                
-                // Add user info to request attributes for downstream use
-                request.setAttribute("userId", userId);
-                request.setAttribute("userEmail", userEmail);
-                request.setAttribute("decodedJWT", decodedJWT);
                 
                 log.debug("User authenticated: {} ({})", userId, userEmail);
             }
@@ -114,6 +109,7 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/swagger-ui/") ||
                path.startsWith("/v3/api-docs/") ||
                path.equals("/error") ||
-               path.startsWith("/api/v1");
+               path.equals("/api/v1/signin") || // Only skip signin endpoint
+               path.startsWith("/api/v1/places"); 
     }
 }
