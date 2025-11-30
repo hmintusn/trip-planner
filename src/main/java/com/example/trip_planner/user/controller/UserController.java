@@ -3,6 +3,8 @@ package com.example.trip_planner.user.controller;
 import com.example.trip_planner.user.dto.UpdateProfileRequest;
 import com.example.trip_planner.user.dto.UserProfileDTO;
 import com.example.trip_planner.user.service.UserService;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;

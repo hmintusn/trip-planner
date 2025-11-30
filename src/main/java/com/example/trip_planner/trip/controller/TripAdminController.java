@@ -3,6 +3,8 @@ package com.example.trip_planner.trip.controller;
 import com.example.trip_planner.trip.dto.TripDetailDTO;
 import com.example.trip_planner.trip.dto.TripSummaryDTO;
 import com.example.trip_planner.trip.service.TripService;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-// @Tag(name = "Admin - Trip Management", description = "Admin APIs for managing all trips")
+@SecurityRequirement(name = "bearerAuth")
 public class TripAdminController {
 
     private final TripService tripService;

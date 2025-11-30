@@ -7,6 +7,7 @@ import com.example.trip_planner.place.model.Place;
 import com.example.trip_planner.place.service.PlaceService;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/admin/places")
 @RequiredArgsConstructor
 @Slf4j
+@SecurityRequirement(name = "bearerAuth")
 public class PlaceAdminController {
     
     private final PlaceService placeService;

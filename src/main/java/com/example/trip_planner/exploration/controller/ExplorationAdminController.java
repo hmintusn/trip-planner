@@ -4,6 +4,8 @@ import com.example.trip_planner.exploration.dto.ExplorationCreateRequest;
 import com.example.trip_planner.exploration.dto.ExplorationDetailsResponse;
 import com.example.trip_planner.exploration.dto.ExplorationUpdateRequest;
 import com.example.trip_planner.exploration.service.ExplorationService;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/admin/explorations")
 @RequiredArgsConstructor
 @Slf4j
+@SecurityRequirement(name = "bearerAuth")
 public class ExplorationAdminController {
     
     private final ExplorationService explorationService;
