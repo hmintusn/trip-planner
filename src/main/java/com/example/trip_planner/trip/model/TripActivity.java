@@ -41,6 +41,6 @@ public class TripActivity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "place_snapshot", columnDefinition = "JSONB")
+    @Column(name = "place_snapshot", columnDefinition = "TEXT")
     private String placeSnapshot; // JSON string for place preview
 }

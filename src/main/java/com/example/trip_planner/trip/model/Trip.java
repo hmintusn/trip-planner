@@ -61,4 +61,7 @@ public class Trip {
     @Version
     @Column(nullable = false)
     private Integer version = 0;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 }

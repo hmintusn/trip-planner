@@ -20,6 +20,9 @@ public class CreateTripRequest {
     @Schema(description = "Trip description", example = "A relaxing weekend getaway")
     private String description;
 
+    @Schema(description = "Trip notes", example = "Don't forget to bring sunscreen")
+    private String notes;
+
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
     @Schema(description = "Start date of the trip", example = "2026-01-10", type = "string", format = "date", pattern = "yyyy-MM-dd")
     private LocalDate startDate;

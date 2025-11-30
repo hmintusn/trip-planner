@@ -12,6 +12,7 @@ public class TripDetailDTO {
     private String ownerLocalId;
     private String name;
     private String description;
+    private String notes;
     private String startDate;
     private String endDate;
     private String visibility;
