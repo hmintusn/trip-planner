@@ -16,6 +16,9 @@ public class UpdateTripRequest {
     @Schema(description = "Updated description", example = "Extended relaxing weekend")
     private String description;
 
+    @Schema(description = "Updated notes", example = "Remember to pack warm clothes")
+    private String notes;
+
     @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
     @Schema(description = "Updated start date", example = "2026-01-10", type = "string", format = "date", pattern = "yyyy-MM-dd")
     private LocalDate startDate;

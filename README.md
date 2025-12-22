@@ -4,6 +4,42 @@
 
 This project demonstrates best practices for integrating **Firebase Authentication** in a **Spring Boot** backend. It securely fetches Firebase JWKS (JSON Web Key Sets), caches them in Redis, and verifies Firebase ID tokens efficiently while handling key rotation automatically.
 
+## 🐳 Quick Start with Docker
+
+### Prerequisites
+- Docker & Docker Compose
+- Git
+- MongoDB Atlas account (for places data)
+
+### Run the Full Stack
+```bash
+# Clone the repository
+git clone <repository-url>
+cd trip-planner
+
+# Start services (API + Redis + PostgreSQL)
+# Note: MongoDB Atlas is used for places data (configured in application.yml)
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f api
+
+# API will be available at http://localhost:8080
+curl http://localhost:8080/api/v1/health
+```
+
+### Import Sample Data
+```bash
+# Import places data (requires MongoDB Atlas connection)
+curl -X POST http://localhost:8080/api/v1/admin/places/import \
+  -F "file=@crawl-data/places_sorted.json"
+```
+
+### Stop Services
+```bash
+docker-compose down
+```
+
 ## 🎯 Features
 
 - ✅ Fetch Firebase public keys (JWKS) from the official endpoint

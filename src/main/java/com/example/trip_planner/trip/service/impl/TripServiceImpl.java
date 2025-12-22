@@ -14,9 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -64,6 +62,80 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    @Transactional
+    public TripDetailDTO createFullTrip(String ownerLocalId, CreateFullTripRequest request) {
+        // Validate user exists
+        User owner = userRepository.findByLocalId(ownerLocalId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create basic trip
+        Trip trip = new Trip();
+        trip.setOwnerLocalId(ownerLocalId);
+        trip.setName(request.getName());
+        trip.setDescription(request.getDescription());
+        trip.setNotes(request.getNotes());
+        trip.setStartDate(request.getStartDate());
+        trip.setEndDate(request.getEndDate());
+        if (request.getVisibility() != null) {
+            trip.setVisibility(TripVisibility.valueOf(request.getVisibility().toUpperCase()));
+        }
+        trip.setStatus(TripStatus.ACTIVE);
+
+        Trip savedTrip = tripRepository.save(trip);
+
+        // Add owner as member
+        TripMember ownerMember = new TripMember();
+        ownerMember.setTripId(savedTrip.getId());
+        ownerMember.setUserLocalId(ownerLocalId);
+        ownerMember.setRole(TripMemberRole.OWNER);
+        tripMemberRepository.save(ownerMember);
+
+        // Add members if provided
+        if (request.getMembers() != null && !request.getMembers().isEmpty()) {
+            for (AddMemberRequest memberReq : request.getMembers()) {
+                // Validate member user exists
+                userRepository.findByLocalId(memberReq.getUserLocalId())
+                    .orElseThrow(() -> new RuntimeException("Member user not found: " + memberReq.getUserLocalId()));
+
+                TripMember member = new TripMember();
+                member.setTripId(savedTrip.getId());
+                member.setUserLocalId(memberReq.getUserLocalId());
+                member.setRole(memberReq.getRole() != null ? memberReq.getRole() : TripMemberRole.VIEWER);
+                tripMemberRepository.save(member);
+            }
+        }
+
+        // Add days and activities if provided
+        if (request.getDays() != null && !request.getDays().isEmpty()) {
+            for (CreateDayWithActivitiesRequest dayReq : request.getDays()) {
+                TripDay day = new TripDay();
+                day.setTripId(savedTrip.getId());
+                day.setDayDate(dayReq.getDayDate());
+                day.setOrderIndex(dayReq.getOrderIndex() != null ? dayReq.getOrderIndex() : 0);
+                day.setNotes(dayReq.getNotes());
+                TripDay savedDay = tripDayRepository.save(day);
+
+                // Add activities for this day if provided
+                if (dayReq.getActivities() != null && !dayReq.getActivities().isEmpty()) {
+                    for (AddActivityRequest activityReq : dayReq.getActivities()) {
+                        TripActivity activity = new TripActivity();
+                        activity.setTripDayId(savedDay.getId());
+                        activity.setPlaceId(activityReq.getPlaceId());
+                        activity.setStartTime(activityReq.getStartTime());
+                        activity.setEndTime(activityReq.getEndTime());
+                        activity.setOrderIndex(activityReq.getOrderIndex() != null ? activityReq.getOrderIndex() : 0);
+                        activity.setNotes(activityReq.getNotes());
+                        // TODO: Fetch place preview from Mongo and set placeSnapshot
+                        tripActivityRepository.save(activity);
+                    }
+                }
+            }
+        }
+
+        return mapToDetailDTO(savedTrip);
+    }
+
+    @Override
     public Page<TripSummaryDTO> getUserTrips(String userLocalId, String status, String q, Pageable pageable) {
         TripStatus statusEnum = status != null ? TripStatus.valueOf(status.toUpperCase()) : TripStatus.DELETED;
         Page<Trip> trips;
@@ -105,6 +177,7 @@ public class TripServiceImpl implements TripService {
 
         if (request.getName() != null) trip.setName(request.getName());
         if (request.getDescription() != null) trip.setDescription(request.getDescription());
+        if (request.getNotes() != null) trip.setNotes(request.getNotes());
         if (request.getStartDate() != null) trip.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) trip.setEndDate(request.getEndDate());
         if (request.getVisibility() != null) trip.setVisibility(TripVisibility.valueOf(request.getVisibility().toUpperCase()));
@@ -193,9 +266,6 @@ public class TripServiceImpl implements TripService {
         activity.setEndTime(request.getEndTime());
         activity.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
         activity.setNotes(request.getNotes());
-
-        // TODO: Fetch place preview from Mongo and set placeSnapshot
-
         TripActivity saved = tripActivityRepository.save(activity);
         return mapToActivityDTO(saved);
     }
@@ -304,6 +374,7 @@ public class TripServiceImpl implements TripService {
         dto.setOwnerLocalId(trip.getOwnerLocalId());
         dto.setName(trip.getName());
         dto.setDescription(trip.getDescription());
+        dto.setNotes(trip.getNotes());
         dto.setStartDate(trip.getStartDate() != null ? trip.getStartDate().toString() : null);
         dto.setEndDate(trip.getEndDate() != null ? trip.getEndDate().toString() : null);
         dto.setVisibility(trip.getVisibility().name());

@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "TEST123",
+    "name": "Test Place",
+    "formattedAddress": "Test Address",
+    "types": ["test"],
+    "location": {
+      "type": "Point",
+      "coordinates": [105.8650816, 20.2785788]
+    },
+    "rating": 4.5,
+    "userRatingCount": 100,
+    "provinceId": 1,
+    "provinceName": "Test Province",
+    "category": "attraction",
+    "score": 8.5
+  }
+]

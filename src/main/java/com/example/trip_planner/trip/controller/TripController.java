@@ -27,11 +27,11 @@ public class TripController {
     private final TripService tripService;
 
     @PostMapping("/trips")
-    public ResponseEntity<TripDetailDTO> createTrip(@Valid @RequestBody CreateTripRequest request) {
+    public ResponseEntity<TripDetailDTO> createTrip(@Valid @RequestBody CreateFullTripRequest request) {
         String userLocalId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         log.info("POST /api/v1/trips - uid: {}", userLocalId);
 
-        TripDetailDTO trip = tripService.createTrip(userLocalId, request);
+        TripDetailDTO trip = tripService.createFullTrip(userLocalId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(trip);
     }
 

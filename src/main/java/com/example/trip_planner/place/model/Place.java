@@ -56,7 +56,7 @@ public class Place {
     private String provinceName;
     
     @Indexed
-    private String category; // attraction, hotel, restaurant, entertainment
+    private String category; // heritage, attraction, hotel, restaurant, entertainment
     
     private String priceLevel;
     private String thumbnail;

@@ -11,6 +11,8 @@ public interface TripService {
 
     TripDetailDTO createTrip(String ownerLocalId, CreateTripRequest request);
 
+    TripDetailDTO createFullTrip(String ownerLocalId, CreateFullTripRequest request);
+
     Page<TripSummaryDTO> getUserTrips(String userLocalId, String status, String q, Pageable pageable);
 
     TripDetailDTO getTripDetail(UUID tripId, String userLocalId);

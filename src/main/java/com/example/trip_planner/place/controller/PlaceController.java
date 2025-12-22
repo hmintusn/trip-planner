@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller for place operations (User endpoints)
  */
@@ -96,5 +98,19 @@ public class PlaceController {
         PlaceDetailResponse result = placeService.getPlaceById(id);
         
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Get a list of predefined categories
+     * 
+     * @return List of predefined categories
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        log.info("GET /api/v1/places/categories");
+        
+        List<String> categories = List.of("heritage", "attraction", "restaurant", "hotel", "entertainment");
+        
+        return ResponseEntity.ok(categories);
     }
 }
