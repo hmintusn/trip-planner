@@ -13,8 +13,11 @@ COPY gradle/ gradle/
 # Copy source code
 COPY src/ src/
 
-# Build the application (skip tests for faster builds)
-RUN ./gradlew build -x test
+# Make wrapper executable
+RUN chmod +x gradlew
+
+# Build the application (skip tests, checkStyle for faster builds)
+RUN ./gradlew bootJar -x test -x checkstyleMain -x checkstyleTest
 
 # Stage 2: Run the application
 FROM eclipse-temurin:17-jre
