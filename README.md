@@ -1,229 +1,224 @@
-# 🧩 Spring Boot Firebase JWKS Fetcher & Verifier (with Redis Cache)
+# Trip Planner API
 
-## Overview
+## Introduction
 
-This project demonstrates best practices for integrating **Firebase Authentication** in a **Spring Boot** backend. It securely fetches Firebase JWKS (JSON Web Key Sets), caches them in Redis, and verifies Firebase ID tokens efficiently while handling key rotation automatically.
+Trip Planner is a backend API for collaborative trip planning. It enables users to create and manage trips with multiple members, organize activities across days, and integrate real-world places. The platform supports role-based access control (Owner, Editor, Viewer), uses Firebase for authentication, and provides a structured way to plan group travels.
 
-## 🎯 Features
+## Key Capabilities
 
-- ✅ Fetch Firebase public keys (JWKS) from the official endpoint
-- ✅ Cache JWKS in Redis with proper TTL
-- ✅ Auto-refresh on key rotation or cache expiry
-- ✅ Reusable service for token verification
-- ✅ Spring Security integration
-- ✅ Comprehensive error handling
-- ✅ Monitoring and health check endpoints
+- Create and manage trips with members and detailed itineraries
+- Organize activities by trip days with time scheduling
+- Assign roles to trip members (Owner, Editor, Viewer)
+- Store trips in PostgreSQL and cache optimization data in Redis
+- Integrate places data from MongoDB
+- Use Mapbox for trip optimization
+- Secure endpoints with Firebase authentication
+- Track trip status and visibility (Private, Public)
 
-## 🏗️ Project Structure
-
-```
-com/example/trip_planner/
- ├── common/                 # Shared utilities
- │    ├── config/            # Redis, Security configurations
- │    ├── security/          # JWT filters and authentication
- │    ├── util/              # Helper utilities (Redis, JSON)
- │    └── constants/         # Application constants
- ├── firebase/               # Firebase integration
- │    ├── service/           # JWKS fetch & token verification
- │    └── model/             # Data models
- └── user/                   # User domain
-      ├── controller/        # REST endpoints
-      └── service/           # Business logic
-```
-
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
 
-1. **Java 17+**
-2. **Redis Server** running on localhost:6379
-3. **Firebase Project** with Authentication enabled
+- Java 17 or later
+- Docker & Docker Compose (recommended for full stack)
+- Redis running on `localhost:6379`
+- PostgreSQL database
+- MongoDB Atlas account (for places data)
+- Mapbox API key
+- Firebase project with Authentication enabled
 
-### 1. Configure Firebase Project
-
-Update `src/main/resources/application.yml`:
-
-```yaml
-firebase:
-  project-id: your-actual-firebase-project-id  # Replace with your Firebase project ID
-```
-
-### 2. Start Redis
+### Run with Docker
 
 ```bash
-# Using Docker
+docker-compose up -d
+```
+
+This starts:
+- Spring Boot API on `http://localhost:8080`
+- PostgreSQL database
+- Redis cache
+- Application connects to MongoDB Atlas for places data
+
+### Run Locally
+
+1. Update `src/main/resources/application-local.yml` with your Firebase, PostgreSQL, MongoDB, and Mapbox credentials.
+2. Start Redis:
+
+```bash
 docker run -d -p 6379:6379 redis:alpine
-
-# Or install Redis locally and start the service
 ```
 
-### 3. Run the Application
+3. Run the application:
 
 ```bash
 ./gradlew bootRun
 ```
 
-The application will start on `http://localhost:8080`
+## Project Structure
 
-## 🧪 Testing the Implementation
+- `trip/` — Trip management (create, update, members, days, activities)
+- `user/` — User profiles and authentication
+- `place/` — Place data from MongoDB
+- `firebase/` — Firebase token verification and JWKS caching
+- `exploration/` — Trip exploration and discovery
+- `clustering/` — Place clustering logic
+- `common/` — Shared configurations and security
 
-### 1. Health Check (No Authentication Required)
+## Key Endpoints
+
+### Trip Management
+- `POST /api/v1/trips` — Create a new trip with members, days, and activities
+- `GET /api/v1/trips` — List user's trips
+- `GET /api/v1/trips/{id}` — Get trip details
+- `PUT /api/v1/trips/{id}` — Update trip
+- `DELETE /api/v1/trips/{id}` — Delete trip
+
+### Members & Activities
+- `POST /api/v1/trips/{id}/members` — Add member to trip
+- `DELETE /api/v1/trips/{id}/members/{userLocalId}` — Remove member
+- `POST /api/v1/trips/{id}/days` — Add day to trip
+- `POST /api/v1/trips/{id}/days/{dayId}/activities` — Add activity
+
+### Admin
+- `GET /api/v1/admin/trips` — List all trips (admin only)
+- `PUT /api/v1/admin/trips/{id}/status` — Update trip status
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Client Applications                         │
+│                     (Web, Mobile, Desktop)                           │
+└─────────────────────────┬──────────────────────────────────────────┘
+                          │
+                          │ REST API (HTTP/JWT)
+                          │
+         ┌────────────────▼────────────────────────────────────────────┐
+         │              Spring Boot Backend (Port 8080)                │
+         │  ┌──────────────────────────────────────────────────────┐   │
+         │  │  REST Controllers                                     │   │
+         │  │  - Trip, User, Place, Auth, Admin                    │   │
+         │  └──────────────────┬───────────────────────────────────┘   │
+         │                     │                                        │
+         │  ┌──────────────────▼───────────────────────────────────┐   │
+         │  │  Business Logic Services                            │   │
+         │  │  - TripService, UserService, PlaceService           │   │
+         │  │  - ExplorationService, ClusteringService            │   │
+         │  └──────────────────┬───────────────────────────────────┘   │
+         │                     │                                        │
+         │  ┌──────────────────▼───────────────────────────────────┐   │
+         │  │  Security & Authentication                          │   │
+         │  │  - FirebaseAuthenticationFilter                     │   │
+         │  │  - FirebaseJwksService (token verification)         │   │
+         │  │  - SecurityContextHolder                            │   │
+         │  └──────────────────────────────────────────────────────┘   │
+         └─────────┬──────────────────┬──────────────────┬─────────────┘
+                   │                  │                  │
+        ┌──────────▼───┐   ┌──────────▼───┐   ┌─────────▼────┐
+        │ PostgreSQL   │   │   Redis      │   │  MongoDB     │
+        │ (Port 5432)  │   │ (Port 6379)  │   │  (Atlas)     │
+        │              │   │              │   │              │
+        │ - Trips      │   │ - JWT Cache  │   │ - Places     │
+        │ - Users      │   │ - JWKS Cache │   │ - Snapshots  │
+        │ - Activities │   │ - Session    │   │ - Metadata   │
+        │ - Days       │   │                 │              │
+        └──────────────┘   └──────────────┘   └──────────────┘
+                   │                  │                  │
+                   └──────────────────┬──────────────────┘
+                                      │
+                          ┌───────────▼────────────┐
+                          │  External Services    │
+                          │  ┌─────────────────┐  │
+                          │  │ Firebase Auth   │  │
+                          │  │ - JWKS Endpoint │  │
+                          │  │ - User Tokens   │  │
+                          │  └─────────────────┘  │
+                          │  ┌─────────────────┐  │
+                          │  │ Mapbox API      │  │
+                          │  │ - Optimization  │  │
+                          │  │ - Routing       │  │
+                          │  └─────────────────┘  │
+                          └────────────────────────┘
+```
+
+### Data Flow
+
+1. **Client Request** → REST API with Firebase ID token
+2. **Authentication** → FirebaseAuthenticationFilter validates token via JWKS (cached in Redis)
+3. **Business Logic** → TripService processes request, enforces role-based access
+4. **Data Storage** → 
+   - Trip metadata → PostgreSQL
+   - Place data → MongoDB
+   - Session cache → Redis
+5. **Response** → Trip details with members, days, activities
+
+### Key Components
+
+| Component | Responsibility | Storage |
+|-----------|-----------------|---------|
+| **TripController** | REST endpoints for trip management | N/A |
+| **TripService** | Business logic, role enforcement, optimization | N/A |
+| **TripRepository** | Query trips, members, days, activities | PostgreSQL |
+| **PlaceService** | Place data retrieval and caching | MongoDB |
+| **FirebaseJwksService** | Fetch and cache Firebase public keys | Redis |
+| **SecurityFilter** | Validate JWT tokens on every request | N/A |
+
+## Example: Create a Trip
 
 ```bash
-curl http://localhost:8080/api/public/health
+curl -X POST http://localhost:8080/api/v1/trips \
+  -H "Authorization: Bearer YOUR_FIREBASE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Weekend in Hoi An",
+    "description": "A relaxing weekend getaway",
+    "startDate": "2026-01-10",
+    "endDate": "2026-01-12",
+    "visibility": "PRIVATE",
+    "members": [
+      {
+        "userLocalId": "friend@example.com",
+        "role": "EDITOR"
+      }
+    ],
+    "days": [
+      {
+        "dayDate": "2026-01-10",
+        "notes": "Arrival day",
+        "activities": [
+          {
+            "placeId": "ChIJLfyY2E4rQjERCq-pDhpe4hU",
+            "startTime": "14:00",
+            "endTime": "16:00",
+            "notes": "Check in at hotel"
+          }
+        ]
+      }
+    ]
+  }'
 ```
 
-Expected response:
-```json
-{
-  "status": "UP",
-  "service": "trip-planner",
-  "timestamp": 1699123456789
-}
-```
+## Technology Stack
 
-### 2. JWKS Information (No Authentication Required)
+- **Backend**: Spring Boot, Spring Security, Spring Data JPA
+- **Authentication**: Firebase Authentication with JWT token verification
+- **Databases**: PostgreSQL (trips, users), MongoDB (places), Redis (caching)
+- **Mapping**: Mapbox for trip optimization
+- **DevOps**: Docker, Docker Compose
+- **Build**: Gradle
 
-```bash
-curl http://localhost:8080/api/auth/public/jwks
-```
+## Configuration
 
-This endpoint will:
-- Fetch JWKS from Firebase if not cached
-- Cache the keys in Redis with TTL
-- Return cache metadata and key information
+Key settings in `src/main/resources/application.yml`:
 
-### 3. Test Firebase Token Verification
+- Firebase project ID and JWKS URL
+- PostgreSQL connection string
+- MongoDB Atlas connection
+- Redis host and port
+- Mapbox API token
 
-To test with a real Firebase token, you'll need to:
+---
 
-1. **Get a Firebase ID Token** from your frontend application
-2. **Use it in authenticated requests**:
+For detailed API documentation and examples, see the files under `/doc`.
 
-```bash
-curl -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
-     http://localhost:8080/api/auth/profile
-```
 
-Expected response:
-```json
-{
-  "userId": "firebase-user-id",
-  "userEmail": "user@example.com",
-  "tokenIssuedAt": "2023-11-04T10:30:00Z",
-  "tokenExpiresAt": "2023-11-04T11:30:00Z",
-  "tokenIssuer": "https://securetoken.google.com/your-project-id",
-  "tokenAudience": "your-project-id"
-}
-```
-
-### 4. Cache Management
-
-**Force refresh JWKS:**
-```bash
-curl -X POST http://localhost:8080/api/auth/public/refresh-jwks
-```
-
-**Clear cache:**
-```bash
-curl -X DELETE http://localhost:8080/api/auth/public/clear-cache
-```
-
-## 🔧 Configuration
-
-### Redis Configuration
-
-```yaml
-spring:
-  redis:
-    host: localhost
-    port: 6379
-    timeout: 2000ms
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-```
-
-### Firebase Configuration
-
-```yaml
-firebase:
-  jwks-url: https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
-  cache-ttl-seconds: 3600  # Default TTL if Firebase doesn't specify
-  project-id: your-firebase-project-id
-```
-
-## 🛡️ Security Features
-
-- **JWT Token Verification**: Validates Firebase ID tokens
-- **Key Rotation Handling**: Automatically refreshes keys on signature failures
-- **Redis Caching**: Reduces Firebase API calls
-- **TTL Management**: Respects Firebase Cache-Control headers
-- **Error Handling**: Comprehensive error responses
-
-## 📊 Monitoring
-
-The application provides several monitoring endpoints:
-
-- `/api/public/health` - Application health
-- `/api/auth/public/jwks` - JWKS cache status
-- `/api/auth/jwks-status` - JWKS status (authenticated)
-
-## 🏃‍♂️ Development
-
-### Build
-```bash
-./gradlew build
-```
-
-### Run Tests
-```bash
-./gradlew test
-```
-
-### Run Application
-```bash
-./gradlew bootRun
-```
-
-## 🔍 Key Components
-
-### FirebaseJwksService
-- Fetches JWKS from Firebase
-- Caches keys in Redis with TTL
-- Handles cache expiration and refresh
-
-### FirebaseTokenVerifier
-- Verifies Firebase ID tokens
-- Uses cached JWKS for signature validation
-- Handles key rotation automatically
-
-### FirebaseAuthenticationFilter
-- Spring Security filter for JWT authentication
-- Extracts user information from tokens
-- Sets security context for downstream services
-
-## 🚨 Troubleshooting
-
-### Redis Connection Issues
-- Ensure Redis is running on localhost:6379
-- Check Redis logs for connection errors
-
-### Firebase Token Verification Fails
-- Verify Firebase project ID is correct
-- Check if token is expired
-- Ensure Firebase project has Authentication enabled
-
-### JWKS Fetching Issues
-- Check internet connectivity
-- Verify Firebase JWKS URL is accessible
-- Check application logs for detailed error messages
-
-## 📚 References
-
-- [Firebase Admin SDK Documentation](https://firebase.google.com/docs/admin/setup)
-- [Firebase Public Keys Endpoint](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com)
-- [Spring Boot Redis Guide](https://docs.spring.io/spring-boot/reference/data/nosql/redis.html)
-- [Spring Security JWT Guide](https://spring.io/guides/topicals/spring-security-architecture/)

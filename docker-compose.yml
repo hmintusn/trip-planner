@@ -1,0 +1,54 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trip-planner-api
+    networks:
+      - trip-planner-net
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  redis:
+    image: "redis:7-alpine"
+    container_name: trip-planner-redis
+    networks:
+      - trip-planner-net
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # postgres:
+  #   image: "postgres:16-alpine"
+  #   container_name: trip-planner-postgres
+  #   networks:
+  #     - trip-planner-net
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: tripplanner
+  #     POSTGRES_PASSWORD: tripplanner
+  #     POSTGRES_DB: trip_planner
+  #   ports:
+  #     - "5432:5432"
+  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tripplanner -d trip_planner"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+networks:
+  trip-planner-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
