@@ -109,7 +109,8 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/swagger-ui/") ||
                path.startsWith("/v3/api-docs/") ||
                path.equals("/error") ||
-               path.equals("/api/v1/signin") || // Only skip signin endpoint
-               path.startsWith("/api/v1/places"); 
+               path.equals("/api/v1/signin") || 
+               path.startsWith("/api/v1/places") ||
+               path.startsWith("/api/v1/explorations"); 
     }
 }

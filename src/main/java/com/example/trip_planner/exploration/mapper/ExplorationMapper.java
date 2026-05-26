@@ -30,6 +30,7 @@ public class ExplorationMapper {
                 .category(exploration.getCategory())
                 .score(exploration.getScore())
                 .createdAt(exploration.getCreatedAt())
+                .thumbnail(exploration.getSourceUrl())
                 .build();
     }
     

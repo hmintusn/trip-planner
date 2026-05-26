@@ -54,4 +54,18 @@ public interface PlaceRepository extends MongoRepository<Place, String> {
      */
     @Query("{'location': {$nearSphere: {$geometry: {type: 'Point', coordinates: [?0, ?1]}, $maxDistance: ?2}}}")
     List<Place> findByLocationNearAllCategories(double lng, double lat, double maxDistance);
+    
+    /**
+     * Find restaurants near a point within a distance
+     * Used for trip generation to find nearby dining options
+     */
+    @Query("{'location': {$nearSphere: {$geometry: {type: 'Point', coordinates: [?1, ?0]}, $maxDistance: ?2}}, 'category': 'restaurant'}")
+    List<Place> findNearbyRestaurants(double lat, double lon, double maxDistanceMeters);
+    
+    /**
+     * Find hotels near a point within a distance
+     * Used for trip generation to find nearby accommodation options
+     */
+    @Query("{'location': {$nearSphere: {$geometry: {type: 'Point', coordinates: [?1, ?0]}, $maxDistance: ?2}}, 'category': 'hotel'}")
+    List<Place> findNearbyHotels(double lat, double lon, double maxDistanceMeters);
 }

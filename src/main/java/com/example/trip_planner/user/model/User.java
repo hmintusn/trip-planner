@@ -22,6 +22,10 @@ public class User {
     @Column(name = "local_id", nullable = false, unique = true)
     private String localId; // Firebase localId (uid)
 
+    // @Enumerated(EnumType.STRING)
+    // @Column(name = "role", nullable = false)
+    // private UserRole role;
+    
     @Column(name = "email", unique = true)
     private String email;
 

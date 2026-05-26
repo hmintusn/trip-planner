@@ -1,5 +1,7 @@
-package com.example.trip_planner.clustering;
+package com.example.trip_planner.clustering.util;
 import java.util.List;
+
+import com.example.trip_planner.clustering.model.PlacePoint;
 
 public class GeoUtils {
     private static final double R = 6371000.0; // meters

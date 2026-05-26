@@ -1,4 +1,4 @@
-package com.example.trip_planner.clustering;
+package com.example.trip_planner.clustering.dto;
 
 import java.util.List;
 

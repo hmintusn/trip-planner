@@ -26,4 +26,5 @@ public class ExplorationFeedResponse {
     private String category;
     private Double score;
     private Instant createdAt;
+    private String thumbnail;
 }

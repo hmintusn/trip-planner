@@ -1,5 +1,6 @@
 package com.example.trip_planner.exploration.service.impl;
 
+import com.example.trip_planner.common.util.RedisUtils;
 import com.example.trip_planner.exploration.dto.ExplorationCreateRequest;
 import com.example.trip_planner.exploration.dto.ExplorationDetailsResponse;
 import com.example.trip_planner.exploration.dto.ExplorationFeedResponse;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -30,10 +32,33 @@ import java.util.Map;
 public class ExplorationServiceImpl implements ExplorationService {
     
     private final ExplorationRepository explorationRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String EXPLORATIONS_CACHE_PREFIX = "explorations:list:";
+    private static final long CACHE_TTL_SECONDS = 300; // 5 minutes
     
     @Override
     public Page<ExplorationFeedResponse> getExplorations(Integer provinceId, String category, int page, int size) {
         log.debug("Getting explorations - provinceId: {}, category: {}, page: {}", provinceId, category, page);
+        
+        // Build cache key
+        String cacheKey = EXPLORATIONS_CACHE_PREFIX + 
+                "province:" + (provinceId != null ? provinceId : "all") + 
+                ":category:" + (category != null ? category : "all") + 
+                ":page:" + page + ":size:" + size;
+        
+        // Try to get from cache
+        try {
+            @SuppressWarnings("unchecked")
+            Page<ExplorationFeedResponse> cachedResult = (Page<ExplorationFeedResponse>) RedisUtils.get(redisTemplate, cacheKey);
+            if (cachedResult != null) {
+                log.debug("Cache hit for key: {}", cacheKey);
+                return cachedResult;
+            }
+            log.debug("Cache miss for key: {}", cacheKey);
+        } catch (Exception e) {
+            log.warn("Failed to retrieve from cache, falling back to database: {}", e.getMessage());
+        }
         
         // Sort by score descending, then by id for deterministic pagination (same as Places)
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "score").and(Sort.by("id")));
@@ -51,7 +76,16 @@ public class ExplorationServiceImpl implements ExplorationService {
             explorationPage = explorationRepository.findAll(pageable);
         }
         
-        return explorationPage.map(ExplorationMapper::toFeedResponse);
+        Page<ExplorationFeedResponse> result = explorationPage.map(ExplorationMapper::toFeedResponse);
+        
+        // Store in cache
+        try {
+            RedisUtils.setWithTTL(redisTemplate, cacheKey, result, CACHE_TTL_SECONDS);
+        } catch (Exception e) {
+            log.warn("Failed to cache result: {}", e.getMessage());
+        }
+        
+        return result;
     }
     
     @Override

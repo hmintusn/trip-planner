@@ -36,7 +36,7 @@ public class PlaceAdminController {
      * @param place Place data to create
      * @return Created place details
      */
-    @PostMapping
+    @PostMapping  
     public ResponseEntity<PlaceDetailResponse> createPlace(@RequestBody Place place) {
         log.info("POST /api/v1/admin/places - name: {}", place.getName());
         

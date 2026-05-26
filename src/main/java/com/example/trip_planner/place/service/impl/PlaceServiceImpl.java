@@ -1,5 +1,6 @@
 package com.example.trip_planner.place.service.impl;
 
+import com.example.trip_planner.common.util.RedisUtils;
 import com.example.trip_planner.place.dto.PlaceDetailResponse;
 import com.example.trip_planner.place.dto.PlaceFeedResponse;
 import com.example.trip_planner.place.dto.PlaceRecommendationItem;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,10 +34,33 @@ import java.util.stream.Collectors;
 public class PlaceServiceImpl implements PlaceService {
     
     private final PlaceRepository placeRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String PLACES_CACHE_PREFIX = "places:list:";
+    private static final long CACHE_TTL_SECONDS = 300; // 5 minutes
     
     @Override
     public Page<PlaceFeedResponse> getPlaces(Integer provinceId, String category, int page, int size) {
         log.debug("Getting places - provinceId: {}, category: {}, page: {}", provinceId, category, page);
+        
+        // Build cache key
+        String cacheKey = PLACES_CACHE_PREFIX + 
+                "province:" + (provinceId != null ? provinceId : "all") + 
+                ":category:" + (category != null ? category : "all") + 
+                ":page:" + page + ":size:" + size;
+        
+        // Try to get from cache
+        try {
+            @SuppressWarnings("unchecked")
+            Page<PlaceFeedResponse> cachedResult = (Page<PlaceFeedResponse>) RedisUtils.get(redisTemplate, cacheKey);
+            if (cachedResult != null) {
+                log.debug("Cache hit for key: {}", cacheKey);
+                return cachedResult;
+            }
+            log.debug("Cache miss for key: {}", cacheKey);
+        } catch (Exception e) {
+            log.warn("Failed to retrieve from cache, falling back to database: {}", e.getMessage());
+        }
         
         // Sort by score descending, then by id for deterministic pagination
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "score").and(Sort.by("id")));
@@ -53,7 +78,16 @@ public class PlaceServiceImpl implements PlaceService {
             placePage = placeRepository.findAll(pageable);
         }
         
-        return placePage.map(PlaceMapper::toFeedResponse);
+        Page<PlaceFeedResponse> result = placePage.map(PlaceMapper::toFeedResponse);
+        
+        // Store in cache
+        try {
+            RedisUtils.setWithTTL(redisTemplate, cacheKey, result, CACHE_TTL_SECONDS);
+        } catch (Exception e) {
+            log.warn("Failed to cache result: {}", e.getMessage());
+        }
+        
+        return result;
     }
     
     @Override

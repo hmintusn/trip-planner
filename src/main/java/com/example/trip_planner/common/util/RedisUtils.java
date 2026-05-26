@@ -30,7 +30,7 @@ public final class RedisUtils {
             log.debug("Set Redis key: {} with TTL: {} seconds", key, ttlSeconds);
         } catch (Exception e) {
             log.error("Failed to set Redis key: {}", key, e);
-            throw new RuntimeException("Redis operation failed", e);
+            // Don't throw exception, just log it to prevent cache failures from breaking the application
         }
     }
     
@@ -62,7 +62,8 @@ public final class RedisUtils {
             return value;
         } catch (Exception e) {
             log.error("Failed to get Redis key: {}", key, e);
-            throw new RuntimeException("Redis operation failed", e);
+            // Return null instead of throwing to prevent cache failures from breaking the application
+            return null;
         }
     }
     

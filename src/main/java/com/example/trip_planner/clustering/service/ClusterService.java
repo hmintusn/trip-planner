@@ -1,4 +1,4 @@
-package com.example.trip_planner.clustering;
+package com.example.trip_planner.clustering.service;
 
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
@@ -6,6 +6,9 @@ import org.apache.commons.math3.ml.distance.EuclideanDistance;
 import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.springframework.stereotype.Service;
+
+import com.example.trip_planner.clustering.model.PlacePoint;
+import com.example.trip_planner.clustering.util.GeoUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,7 +69,7 @@ public class ClusterService {
             List<PlacePoint> pts = c.getPoints();
             if (pts.isEmpty()) continue;
 
-            // Centroid theo trung bình arithmetic
+            // Centroid using the arithmetic mean
             double cx = pts.stream().mapToDouble(p -> p.getPoint()[0]).average().orElse(0);
             double cy = pts.stream().mapToDouble(p -> p.getPoint()[1]).average().orElse(0);
 

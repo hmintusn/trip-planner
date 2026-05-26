@@ -1,5 +1,10 @@
-package com.example.trip_planner.clustering;
+package com.example.trip_planner.clustering.controller;
 
+import com.example.trip_planner.clustering.dto.ClusterDTO;
+import com.example.trip_planner.clustering.dto.ClusterRequest;
+import com.example.trip_planner.clustering.dto.PlaceDTO;
+import com.example.trip_planner.clustering.model.PlacePoint;
+import com.example.trip_planner.clustering.service.ClusterService;
 import com.example.trip_planner.place.model.Place;
 import com.example.trip_planner.place.repository.PlaceRepository;
 import org.apache.commons.math3.ml.clustering.CentroidCluster;

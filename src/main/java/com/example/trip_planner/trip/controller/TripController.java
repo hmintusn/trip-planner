@@ -1,7 +1,11 @@
 package com.example.trip_planner.trip.controller;
 
+import com.example.trip_planner.clustering.dto.GenerateTripRequest;
+import com.example.trip_planner.clustering.dto.GeneratedTripDTO;
 import com.example.trip_planner.trip.dto.*;
+import com.example.trip_planner.trip.service.TripGenerationService;
 import com.example.trip_planner.trip.service.TripService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,38 @@ import java.util.UUID;
 public class TripController {
 
     private final TripService tripService;
+    private final TripGenerationService tripGenerationService;
+
+    @PostMapping("/trips/generate-optimized")
+    @Operation(
+        summary = "Generate optimized trip (READ-ONLY)", 
+        description = "Generates a complete trip itinerary by clustering heritage sites and finding optimal restaurants. " +
+                      "**IMPORTANT: This endpoint does NOT save anything to the database.** " +
+                      "It only returns a trip structure for the user to review and edit. " +
+                      "Use POST /trips to actually save the trip after editing."
+    )
+    public ResponseEntity<GeneratedTripDTO> generateOptimizedTrip(@Valid @RequestBody GenerateTripRequest request) {
+        // Validate: need at least days * 2 places (2 clusters per day for morning + afternoon)
+        int requiredPlaces = request.getDays() * 2;
+        if (request.getHeritagePlaceIds().size() < requiredPlaces) {
+            log.warn("Insufficient places: need at least {} places for {} days ({} clusters), got {} places", 
+                     requiredPlaces, request.getDays(), requiredPlaces, request.getHeritagePlaceIds().size());
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            // Generate trip (DOES NOT SAVE to database - user will review/edit before saving via POST /trips)
+            GeneratedTripDTO trip = tripGenerationService.generateTrip(request);
+            log.info("Successfully generated trip with {} days", trip.getDays().size());
+            return ResponseEntity.ok(trip);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid request: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error generating trip: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     @PostMapping("/trips")
     public ResponseEntity<TripDetailDTO> createTrip(@Valid @RequestBody CreateFullTripRequest request) {

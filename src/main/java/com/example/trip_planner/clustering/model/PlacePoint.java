@@ -1,4 +1,4 @@
-package com.example.trip_planner.clustering;
+package com.example.trip_planner.clustering.model;
 
 import org.apache.commons.math3.ml.clustering.Clusterable;
 
@@ -7,7 +7,6 @@ public class PlacePoint implements Clusterable {
     private final double lat;
     private final double lon;
 
-    // điểm sau khi convert sang meter
     private double[] point;
 
     public PlacePoint(String id, double lat, double lon) {
