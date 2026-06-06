@@ -1,224 +1,344 @@
-# Trip Planner API
+# Trip Planner
 
-## Introduction
+An intelligent travel planning platform that automatically generates optimized multi-day itineraries using geospatial clustering and route optimization.
 
-Trip Planner is a backend API for collaborative trip planning. It enables users to create and manage trips with multiple members, organize activities across days, and integrate real-world places. The platform supports role-based access control (Owner, Editor, Viewer), uses Firebase for authentication, and provides a structured way to plan group travels.
+Instead of manually arranging destinations, travelers can provide a list of attractions and trip duration, and the system will generate a structured itinerary by grouping nearby locations, recommending restaurants, and optimizing travel routes.
 
-## Key Capabilities
+---
 
-- Create and manage trips with members and detailed itineraries
-- Organize activities by trip days with time scheduling
-- Assign roles to trip members (Owner, Editor, Viewer)
-- Store trips in PostgreSQL and cache optimization data in Redis
-- Integrate places data from MongoDB
-- Use Mapbox for trip optimization
-- Secure endpoints with Firebase authentication
-- Track trip status and visibility (Private, Public)
+## Why This Project?
 
-## Getting Started
+Planning a multi-day trip is often inefficient:
+
+* Attractions are scattered across a city or region
+* Users manually decide which places belong together
+* Travel routes are suboptimal
+* Significant time is spent researching nearby restaurants and logistics
+
+This project addresses these challenges through automated itinerary generation powered by clustering algorithms and route optimization.
+
+---
+
+## Key Features
+
+### Intelligent Itinerary Generation
+
+The platform automatically:
+
+* Groups nearby attractions into logical travel sessions
+* Creates balanced daily schedules
+* Recommends nearby restaurants
+* Optimizes visit order to reduce travel time
+* Generates a complete multi-day itinerary
+
+### Geospatial Clustering
+
+Attractions are clustered using a customized Balanced K-Means implementation that:
+
+* Groups geographically close destinations
+* Produces balanced cluster sizes
+* Creates realistic daily workloads
+* Minimizes unnecessary transportation
+
+### Route Optimization
+
+The system integrates with Mapbox Optimization API to determine the most efficient visiting sequence.
+
+Benefits include:
+
+* Reduced travel distance
+* Less backtracking
+* Better time utilization
+* Improved user experience
+
+### Collaborative Trip Planning
+
+Trips support multiple members with role-based access control.
+
+Roles:
+
+* Owner
+* Editor
+* Viewer
+
+Features:
+
+* Shared itineraries
+* Member management
+* Public and private trips
+
+### Secure Authentication
+
+* Firebase Authentication
+* JWT validation
+* Cached JWKS verification
+* Spring Security integration
+
+---
+
+## How It Works
+
+Given a list of attractions and trip duration:
+
+### 1. Load Places
+
+The system retrieves attraction information from MongoDB.
+
+### 2. Cluster Destinations
+
+A Balanced K-Means algorithm groups attractions into travel sessions.
+
+```text
+Number of clusters = days × 2
+
+Day 1:
+  Morning Cluster
+  Afternoon Cluster
+
+Day 2:
+  Morning Cluster
+  Afternoon Cluster
+```
+
+### 3. Recommend Restaurants
+
+For each cluster:
+
+* Calculate geographic centroid
+* Search nearby restaurants using MongoDB geospatial queries
+* Select highly-rated candidates
+
+### 4. Optimize Cluster Order
+
+Clusters are arranged using a nearest-neighbor optimization strategy to reduce inter-cluster travel.
+
+### 5. Optimize Visit Sequence
+
+Mapbox Optimization API determines the best order for visiting attractions within each session.
+
+### 6. Generate Final Itinerary
+
+The system produces:
+
+* Daily schedules
+* Time slots
+* Attraction ordering
+* Restaurant recommendations
+
+without modifying any persisted trip data.
+
+---
+
+## Example Generated Schedule
+
+```text
+Day 1
+
+09:00 - 10:30   Bai Dinh Pagoda
+11:00 - 12:30   Trang An Landscape Complex
+
+13:00 - 14:00   Lunch Restaurant
+
+14:30 - 16:00   Hoa Lu Ancient Capital
+
+17:00 - 18:30   Dinner Restaurant
+```
+
+---
+
+## Architecture
+
+```text
+                  ┌──────────────┐
+                  │   Clients    │
+                  └──────┬───────┘
+                         │
+                         ▼
+               ┌─────────────────┐
+               │ Spring Boot API │
+               └──────┬──────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+  PostgreSQL      MongoDB        Redis
+   Trip Data     Place Data      Cache
+                      │
+                      ▼
+              Clustering Engine
+                      │
+                      ▼
+               Mapbox Routing
+                      │
+                      ▼
+           Generated Itinerary
+```
+
+---
+
+## Technical Challenges
+
+### Balanced K-Means Clustering
+
+Traditional K-Means may create uneven clusters.
+
+A customized implementation is used to:
+
+* Balance cluster sizes
+* Improve daily workload distribution
+* Generate more practical travel plans
+
+### Geospatial Search
+
+MongoDB geospatial indexes enable:
+
+* Radius-based restaurant search
+* Distance-aware recommendations
+* Fast location queries
+
+### Route Optimization
+
+Mapbox Optimization API is used to:
+
+* Minimize travel distance
+* Optimize visit ordering
+* Improve itinerary efficiency
+
+### Multi-Database Architecture
+
+The system uses different databases for different workloads:
+
+| Database   | Purpose                    |
+| ---------- | -------------------------- |
+| PostgreSQL | Trip and user data         |
+| MongoDB    | Place and geospatial data  |
+| Redis      | Authentication and caching |
+
+---
+
+## Tech Stack
+
+### Backend
+
+* Java 17
+* Spring Boot
+* Spring Security
+* Spring Data JPA
+
+### Data Layer
+
+* PostgreSQL
+* MongoDB
+* Redis
+
+### Authentication
+
+* Firebase Authentication
+* JWT Verification
+
+### Mapping & Optimization
+
+* Mapbox Optimization API
+* Mapbox Routing Services
+
+### Infrastructure
+
+* Docker
+* Docker Compose
+* Gradle
+
+---
+
+## Project Structure
+
+```text
+src/main/java/
+
+├── trip/
+│   ├── controller/
+│   ├── service/
+│   ├── repository/
+│   └── model/
+│
+├── clustering/
+│   ├── service/
+│   ├── controller/
+│   └── dto/
+│
+├── place/
+│   ├── service/
+│   ├── repository/
+│   └── model/
+│
+├── firebase/
+│   ├── security/
+│   └── service/
+│
+├── exploration/
+│
+└── common/
+```
+
+---
+
+## Running Locally
 
 ### Prerequisites
 
-- Java 17 or later
-- Docker & Docker Compose (recommended for full stack)
-- Redis running on `localhost:6379`
-- PostgreSQL database
-- MongoDB Atlas account (for places data)
-- Mapbox API key
-- Firebase project with Authentication enabled
+* Java 17+
+* Docker
+* PostgreSQL
+* Redis
+* MongoDB
+* Firebase Project
+* Mapbox API Key
 
-### Run with Docker
+### Start Infrastructure
 
 ```bash
 docker-compose up -d
 ```
 
-This starts:
-- Spring Boot API on `http://localhost:8080`
-- PostgreSQL database
-- Redis cache
-- Application connects to MongoDB Atlas for places data
-
-### Run Locally
-
-1. Update `src/main/resources/application-local.yml` with your Firebase, PostgreSQL, MongoDB, and Mapbox credentials.
-2. Start Redis:
-
-```bash
-docker run -d -p 6379:6379 redis:alpine
-```
-
-3. Run the application:
+### Run Application
 
 ```bash
 ./gradlew bootRun
 ```
 
-## Project Structure
+Application starts at:
 
-- `trip/` — Trip management (create, update, members, days, activities)
-- `user/` — User profiles and authentication
-- `place/` — Place data from MongoDB
-- `firebase/` — Firebase token verification and JWKS caching
-- `exploration/` — Trip exploration and discovery
-- `clustering/` — Place clustering logic
-- `common/` — Shared configurations and security
-
-## Key Endpoints
-
-### Trip Management
-- `POST /api/v1/trips` — Create a new trip with members, days, and activities
-- `GET /api/v1/trips` — List user's trips
-- `GET /api/v1/trips/{id}` — Get trip details
-- `PUT /api/v1/trips/{id}` — Update trip
-- `DELETE /api/v1/trips/{id}` — Delete trip
-
-### Members & Activities
-- `POST /api/v1/trips/{id}/members` — Add member to trip
-- `DELETE /api/v1/trips/{id}/members/{userLocalId}` — Remove member
-- `POST /api/v1/trips/{id}/days` — Add day to trip
-- `POST /api/v1/trips/{id}/days/{dayId}/activities` — Add activity
-
-### Admin
-- `GET /api/v1/admin/trips` — List all trips (admin only)
-- `PUT /api/v1/admin/trips/{id}/status` — Update trip status
-
-## Architecture Overview
-
+```text
+http://localhost:8080
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          Client Applications                         │
-│                     (Web, Mobile, Desktop)                           │
-└─────────────────────────┬──────────────────────────────────────────┘
-                          │
-                          │ REST API (HTTP/JWT)
-                          │
-         ┌────────────────▼────────────────────────────────────────────┐
-         │              Spring Boot Backend (Port 8080)                │
-         │  ┌──────────────────────────────────────────────────────┐   │
-         │  │  REST Controllers                                     │   │
-         │  │  - Trip, User, Place, Auth, Admin                    │   │
-         │  └──────────────────┬───────────────────────────────────┘   │
-         │                     │                                        │
-         │  ┌──────────────────▼───────────────────────────────────┐   │
-         │  │  Business Logic Services                            │   │
-         │  │  - TripService, UserService, PlaceService           │   │
-         │  │  - ExplorationService, ClusteringService            │   │
-         │  └──────────────────┬───────────────────────────────────┘   │
-         │                     │                                        │
-         │  ┌──────────────────▼───────────────────────────────────┐   │
-         │  │  Security & Authentication                          │   │
-         │  │  - FirebaseAuthenticationFilter                     │   │
-         │  │  - FirebaseJwksService (token verification)         │   │
-         │  │  - SecurityContextHolder                            │   │
-         │  └──────────────────────────────────────────────────────┘   │
-         └─────────┬──────────────────┬──────────────────┬─────────────┘
-                   │                  │                  │
-        ┌──────────▼───┐   ┌──────────▼───┐   ┌─────────▼────┐
-        │ PostgreSQL   │   │   Redis      │   │  MongoDB     │
-        │ (Port 5432)  │   │ (Port 6379)  │   │  (Atlas)     │
-        │              │   │              │   │              │
-        │ - Trips      │   │ - JWT Cache  │   │ - Places     │
-        │ - Users      │   │ - JWKS Cache │   │ - Snapshots  │
-        │ - Activities │   │ - Session    │   │ - Metadata   │
-        │ - Days       │   │                 │              │
-        └──────────────┘   └──────────────┘   └──────────────┘
-                   │                  │                  │
-                   └──────────────────┬──────────────────┘
-                                      │
-                          ┌───────────▼────────────┐
-                          │  External Services    │
-                          │  ┌─────────────────┐  │
-                          │  │ Firebase Auth   │  │
-                          │  │ - JWKS Endpoint │  │
-                          │  │ - User Tokens   │  │
-                          │  └─────────────────┘  │
-                          │  ┌─────────────────┐  │
-                          │  │ Mapbox API      │  │
-                          │  │ - Optimization  │  │
-                          │  │ - Routing       │  │
-                          │  └─────────────────┘  │
-                          └────────────────────────┘
-```
-
-### Data Flow
-
-1. **Client Request** → REST API with Firebase ID token
-2. **Authentication** → FirebaseAuthenticationFilter validates token via JWKS (cached in Redis)
-3. **Business Logic** → TripService processes request, enforces role-based access
-4. **Data Storage** → 
-   - Trip metadata → PostgreSQL
-   - Place data → MongoDB
-   - Session cache → Redis
-5. **Response** → Trip details with members, days, activities
-
-### Key Components
-
-| Component | Responsibility | Storage |
-|-----------|-----------------|---------|
-| **TripController** | REST endpoints for trip management | N/A |
-| **TripService** | Business logic, role enforcement, optimization | N/A |
-| **TripRepository** | Query trips, members, days, activities | PostgreSQL |
-| **PlaceService** | Place data retrieval and caching | MongoDB |
-| **FirebaseJwksService** | Fetch and cache Firebase public keys | Redis |
-| **SecurityFilter** | Validate JWT tokens on every request | N/A |
-
-## Example: Create a Trip
-
-```bash
-curl -X POST http://localhost:8080/api/v1/trips \
-  -H "Authorization: Bearer YOUR_FIREBASE_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Weekend in Hoi An",
-    "description": "A relaxing weekend getaway",
-    "startDate": "2026-01-10",
-    "endDate": "2026-01-12",
-    "visibility": "PRIVATE",
-    "members": [
-      {
-        "userLocalId": "friend@example.com",
-        "role": "EDITOR"
-      }
-    ],
-    "days": [
-      {
-        "dayDate": "2026-01-10",
-        "notes": "Arrival day",
-        "activities": [
-          {
-            "placeId": "ChIJLfyY2E4rQjERCq-pDhpe4hU",
-            "startTime": "14:00",
-            "endTime": "16:00",
-            "notes": "Check in at hotel"
-          }
-        ]
-      }
-    ]
-  }'
-```
-
-## Technology Stack
-
-- **Backend**: Spring Boot, Spring Security, Spring Data JPA
-- **Authentication**: Firebase Authentication with JWT token verification
-- **Databases**: PostgreSQL (trips, users), MongoDB (places), Redis (caching)
-- **Mapping**: Mapbox for trip optimization
-- **DevOps**: Docker, Docker Compose
-- **Build**: Gradle
-
-## Configuration
-
-Key settings in `src/main/resources/application.yml`:
-
-- Firebase project ID and JWKS URL
-- PostgreSQL connection string
-- MongoDB Atlas connection
-- Redis host and port
-- Mapbox API token
 
 ---
 
-For detailed API documentation and examples, see the files under `/doc`.
+## Future Improvements
 
+* AI-powered itinerary generation
+* User preference learning
+* Budget-aware trip planning
+* Hotel recommendations
+* Weather-aware scheduling
+* Real-time traffic optimization
+* Multi-city trip support
 
+---
+
+## Resume Highlights
+
+Key engineering concepts demonstrated by this project:
+
+* Geospatial data processing
+* Balanced K-Means clustering
+* Route optimization
+* Multi-database architecture
+* JWT authentication
+* Distributed caching
+* REST API design
+* Third-party service integration
+
+---
+
+## License
+
+MIT License
